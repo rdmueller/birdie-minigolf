@@ -121,3 +121,55 @@ button:disabled {
 #shareGameButton:hover {
     background-color: #2980b9;
 }
+
+.speech-recognition-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+#speechButton {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+#speechButton:hover {
+    background-color: #2980b9;
+}
+
+#speechButton:active {
+    transform: scale(0.98);
+}
+
+#microphoneError {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background-color: #e74c3c;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    white-space: nowrap;
+}
+
+/* Anpassung für kleinere Bildschirme */
+@media (max-width: 600px) {
+    .speech-recognition-container {
+        bottom: 10px;
+        right: 10px;
+    }
+
+    #speechButton {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}

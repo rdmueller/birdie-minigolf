@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minigolf Scoreboard</title>
+    <title>Birdie Scoreboard</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="app" class="container">
-        <h1>Minigolf Scoreboard</h1>
+        <h1>Birdie Scoreboard</h1>
         <div id="gameControls">
             <button id="newGameButton">Neues Spiel</button>
             <select id="loadGameSelect">
@@ -20,10 +20,6 @@
             <input type="text" id="newPlayerInput" placeholder="Spielername">
             <button id="addPlayerButton">Spieler hinzufügen</button>
             <button id="finishPlayerSelectionButton">Spielerauswahl abschließen</button>
-            <div id="speechRecognition">
-                <button id="speechButton">Sprachbefehl</button>
-                <div id="microphoneError" class="error"></div>
-            </div>
             <ul id="playerList"></ul>
         </div>
         <div id="gameArea" style="display: none;">
@@ -34,6 +30,10 @@
             Sprachbefehle: "Spieler [Name] hinzufügen", "Bahn abschließen", "Punktzahl für [Spieler] [Zahl]"
         </div>
         <div id="speechRecognitionResult"></div>
+    </div>
+    <div id="speechRecognition" class="speech-recognition-container">
+        <button id="speechButton">Sprachbefehl</button>
+        <div id="microphoneError" class="error"></div>
     </div>
     <script src="script.js"></script>
 </body>
