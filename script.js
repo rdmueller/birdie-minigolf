@@ -128,11 +128,15 @@ class MinigolfApp {
             if (name) {
                 console.log("Füge Spieler hinzu:", name);
                 this.addPlayer(name);
+                const utterance = new SpeechSynthesisUtterance('Spieler '+name+' hinzugefügt');
+                window.speechSynthesis.speak(utterance);
             }
         } else if (lowerCommand.includes('bahn abschließen')) {
             console.log("Schließe Bahn ab");
             this.completeHole();
-        } else if (lowerCommand.includes('punktzahl')) {
+            const utterance = new SpeechSynthesisUtterance('Bahn abgeschlossen');
+            window.speechSynthesis.speak(utterance);
+    } else if (lowerCommand.includes('punktzahl')) {
             const parts = lowerCommand.split(' ');
             const playerIndex = parts.findIndex(part => part === 'für') + 1;
             const scoreIndex = parts.findIndex(part => !isNaN(part));
@@ -142,6 +146,8 @@ class MinigolfApp {
                 if (this.players.includes(player.toLowerCase())) {
                     console.log("Aktualisiere Punktzahl:", player, score);
                     this.updateScore(player.toLowerCase(), this.completedHoles, score);
+                    const utterance = new SpeechSynthesisUtterance('Spieler '+player+' hat '+score+' Schläge benötigt');
+                    window.speechSynthesis.speak(utterance);
                 }
             }
         }
