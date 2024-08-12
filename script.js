@@ -126,7 +126,7 @@ class MinigolfApp {
         console.log("Verarbeite Sprachbefehl:", command);
         const lowerCommand = command.toLowerCase();
         if (lowerCommand.includes('spieler') && lowerCommand.includes('hinzufügen')) {
-            const name = lowerCommand.replace(/.*spieler{0,1} ([a-zA-Z0-9]+) hinzufügen.*/, "$1").trim();
+            const name = lowerCommand.replace(/.*spieler* ([a-zA-Z0-9]+) hinzufügen.*/, "$1").trim();
             if (name) {
                 console.log("Füge Spieler hinzu:", name);
                 this.addPlayer(name);
