@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minigolf Scoreboard</title>
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin: 4px 0;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #27ae60;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        function MinigolfApp() {
+            const [players, setPlayers] = React.useState([]);
+            const [newPlayer, setNewPlayer] = React.useState('');
+            const [scores, setScores] = React.useState({});
+            const [completedHoles, setCompletedHoles] = React.useState(0);
+            const [isListening, setIsListening] = React.useState(false);
+            const [speechRecognition, setSpeechRecognition] = React.useState(null);
+            const [microphoneError, setMicrophoneError] = React.useState(null);
+
+            React.useEffect(() => {
+                if ('webkitSpeechRecognition' in window) {
+                    const recognition = new window.webkitSpeechRecognition();
+                    recognition.continuous = false;
+                    recognition.lang = 'de-DE';
+                    recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        console.log("Erkannter Text:", transcript);
+                        processVoiceCommand(transcript);
+                    };
+                    recognition.onend = () => {
+                        console.log("Spracherkennung beendet");
+                        setIsListening(false);
+                    };
+                    recognition.onerror = (event) => {
+                        console.error("Spracherkennungsfehler:", event.error);
+                        if (event.error === 'not-allowed') {
+                            setMicrophoneError('Mikrofonzugriff wurde verweigert. Bitte erteilen Sie die Erlaubnis in Ihren Browsereinstellungen.');
+                        }
+                        setIsListening(false);
+                    };
+                    setSpeechRecognition(recognition);
+                    console.log("Spracherkennung initialisiert");
+                } else {
+                    console.log("Spracherkennung wird von diesem Browser nicht unterstützt");
+                    setMicrophoneError('Ihr Browser unterstützt die Spracherkennung nicht. Bitte verwenden Sie einen modernen Browser wie Chrome.');
+                }
+            }, []);
+
+            function processVoiceCommand(command) {
+                console.log("Verarbeite Sprachbefehl:", command);
+                const lowerCommand = command.toLowerCase();
+                if (lowerCommand.includes('spieler') && lowerCommand.includes('hinzufügen')) {
+                    const name = lowerCommand.replace('spieler hinzufügen', '').trim();
+                    if (name) {
+                        console.log("Füge Spieler hinzu:", name);
+                        addPlayer(name);
+                    }
+                } else if (lowerCommand.includes('bahn abschließen')) {
+                    console.log("Schließe Bahn ab");
+                    completeHole();
+                } else if (lowerCommand.includes('punktzahl')) {
+                    const parts = lowerCommand.split(' ');
+                    const playerIndex = parts.findIndex(part => part === 'für') + 1;
+                    const scoreIndex = parts.findIndex(part => !isNaN(part));
+                    if (playerIndex > 0 && scoreIndex > 0 && playerIndex < scoreIndex) {
+                        const player = parts.slice(playerIndex, scoreIndex).join(' ');
+                        const score = parseInt(parts[scoreIndex]);
+                        if (players.includes(player)) {
+                            console.log("Aktualisiere Punktzahl:", player, score);
+                            updateScore(player, completedHoles, score);
+                        }
+                    }
+                }
+            }
+
+            function startListening() {
+                if (speechRecognition) {
+                    console.log("Starte Spracherkennung");
+                    speechRecognition.start();
+                    setIsListening(true);
+                } else {
+                    console.log("Spracherkennung nicht initialisiert");
+                }
+            }
+
+            function addPlayer(name) {
+                if (name && !players.includes(name)) {
+                    setPlayers([...players, name]);
+                    setScores(prevScores => ({
+                        ...prevScores,
+                        [name]: Array(18).fill(null)
+                    }));
+                    setNewPlayer('');
+                }
+            }
+
+            function updateScore(player, hole, value) {
+                setScores(prevScores => ({
+                    ...prevScores,
+                    [player]: prevScores[player].map((score, index) =>
+                        index === hole ? (value === '' ? null : Math.max(0, parseInt(value) || 0)) : score
+                    )
+                }));
+            }
+
+            function completeHole() {
+                if (completedHoles < 18 && players.every(player => scores[player][completedHoles] !== null)) {
+                    setCompletedHoles(prevHoles => prevHoles + 1);
+                } else {
+                    alert('Bitte füllen Sie die Punktzahlen für alle Spieler aus, bevor Sie die Bahn abschließen.');
+                }
+            }
+
+            function calculateTotal(player) {
+                return scores[player]?.slice(0, completedHoles).reduce((sum, score) => sum + (score || 0), 0) || 0;
+            }
+
+            function getLeader() {
+                if (players.length === 0 || completedHoles === 0) return null;
+                return players.reduce((leader, player) =>
+                    calculateTotal(player) < calculateTotal(leader) ? player : leader
+                );
+            }
+
+            return React.createElement(
+                'div',
+                { className: 'container' },
+                React.createElement('h1', null, 'Minigolf Scoreboard'),
+                React.createElement(
+                    'div',
+                    { style: { marginBottom: '20px', textAlign: 'center' } },
+                    React.createElement(
+                        'button',
+                        {
+                            onClick: startListening,
+                            disabled: isListening,
+                            style: {
+                                backgroundColor: isListening ? '#e74c3c' : '#3498db',
+                                padding: '10px 20px',
+                                fontSize: '16px',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer'
+                            }
+                        },
+                        isListening ? 'Hört zu...' : 'Sprachbefehl'
+                    ),
+                    microphoneError && React.createElement('div', { className: 'error' }, microphoneError)
+                ),
+                React.createElement(
+                    'div',
+                    { style: { marginBottom: '20px', display: 'flex', justifyContent: 'space-between' } },
+                    React.createElement('input', {
+                        type: 'text',
+                        value: newPlayer,
+                        onChange: (e) => setNewPlayer(e.target.value),
+                        placeholder: 'Spielername',
+                        style: { flexGrow: 1, marginRight: '10px' }
+                    }),
+                    React.createElement(
+                        'button',
+                        { onClick: () => addPlayer(newPlayer) },
+                        'Spieler hinzufügen'
+                    )
+                ),
+                players.length > 0 && React.createElement(
+                    React.Fragment,
+                    null,
+                    React.createElement(
+                        'table',
+                        null,
+                        React.createElement(
+                            'thead',
+                            null,
+                            React.createElement(
+                                'tr',
+                                null,
+                                React.createElement('th', null, 'Bahn'),
+                                players.map(player => React.createElement('th', { key: player }, player))
+                            )
+                        ),
+                        React.createElement(
+                            'tbody',
+                            null,
+                            Array.from({ length: completedHoles + 1 }, (_, i) =>
+                                React.createElement(
+                                    'tr',
+                                    { key: i },
+                                    React.createElement('td', null, i + 1),
+                                    players.map(player =>
+                                        React.createElement(
+                                            'td',
+                                            { key: player },
+                                            React.createElement('input', {
+                                                type: 'number',
+                                                value: scores[player][i] === null ? '' : scores[player][i],
+                                                onChange: (e) => updateScore(player, i, e.target.value),
+                                                disabled: i < completedHoles
+                                            })
+                                        )
+                                    )
+                                )
+                            ),
+                            React.createElement(
+                                'tr',
+                                null,
+                                React.createElement('td', null, React.createElement('strong', null, 'Gesamt')),
+                                players.map(player =>
+                                    React.createElement(
+                                        'td',
+                                        { key: player },
+                                        React.createElement('strong', null, calculateTotal(player))
+                                    )
+                                )
+                            )
+                        )
+                    ),
+                    React.createElement(
+                        'div',
+                        { style: { marginTop: '20px', textAlign: 'center' } },
+                        React.createElement(
+                            'button',
+                            { onClick: completeHole, disabled: completedHoles >= 18 },
+                            'Bahn abschließen'
+                        )
+                    ),
+                    getLeader() && React.createElement(
+                        'div',
+                        { style: { marginTop: '20px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold' } },
+                        'Führender Spieler: ',
+                        getLeader(),
+                        ' (Punktzahl: ',
+                        calculateTotal(getLeader()),
+                        ')'
+                    )
+                ),
+                React.createElement(
+                    'div',
+                    { style: { marginTop: '20px', textAlign: 'center', fontSize: '14px', color: '#666' } },
+                    'Sprachbefehle: "Spieler [Name] hinzufügen", "Bahn abschließen", "Punktzahl für [Spieler] [Zahl]"'
+                )
+            );
+        }
+
+        ReactDOM.render(
+            React.createElement(MinigolfApp),
+            document.getElementById('root')
+        );
+    </script>
+</body>
+</html>
