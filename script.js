@@ -124,7 +124,7 @@ class MinigolfApp {
         console.log("Verarbeite Sprachbefehl:", command);
         const lowerCommand = command.toLowerCase();
         if (lowerCommand.includes('spieler') && lowerCommand.includes('hinzufügen')) {
-            const name = lowerCommand.replace(/spieler ([a-zA-Z0-9]+) hinzufügen/, "$1").trim();
+            const name = lowerCommand.replace(/spiele(r|) ([a-zA-Z0-9]+) hinzufügen/, "$1").trim();
             if (name) {
                 console.log("Füge Spieler hinzu:", name);
                 this.addPlayer(name);
@@ -139,9 +139,9 @@ class MinigolfApp {
             if (playerIndex > 0 && scoreIndex > 0 && playerIndex < scoreIndex) {
                 const player = parts.slice(playerIndex, scoreIndex).join(' ');
                 const score = parseInt(parts[scoreIndex]);
-                if (this.players.includes(player)) {
+                if (this.players.includes(player.toLowerCase())) {
                     console.log("Aktualisiere Punktzahl:", player, score);
-                    this.updateScore(player, this.completedHoles, score);
+                    this.updateScore(player.toLowerCase(), this.completedHoles, score);
                 }
             }
         }
