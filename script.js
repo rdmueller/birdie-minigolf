@@ -30,7 +30,9 @@ class MinigolfApp {
         this.newGameButton = document.getElementById('newGameButton');
         this.loadGameSelect = document.getElementById('loadGameSelect');
         this.shareGameButton = document.getElementById('shareGameButton');
-    }
+        const utterance = new SpeechSynthesisUtterance('Willkommen bei Birdie!');
+        window.speechSynthesis.speak(utterance);
+}
 
     initializeSpeechRecognition() {
         if ('webkitSpeechRecognition' in window) {
@@ -124,7 +126,7 @@ class MinigolfApp {
         console.log("Verarbeite Sprachbefehl:", command);
         const lowerCommand = command.toLowerCase();
         if (lowerCommand.includes('spieler') && lowerCommand.includes('hinzufügen')) {
-            const name = lowerCommand.replace(/spiele(r|) ([a-zA-Z0-9]+) hinzufügen/, "$2").trim();
+            const name = lowerCommand.replace(/spieler* ([a-zA-Z0-9]+) hinzufügen/, "$1").trim();
             if (name) {
                 console.log("Füge Spieler hinzu:", name);
                 this.addPlayer(name);
