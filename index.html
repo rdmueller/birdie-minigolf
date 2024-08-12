@@ -4,92 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minigolf Scoreboard</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            border-radius: 8px;
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: center;
-        }
-        th {
-            background-color: #3498db;
-            color: white;
-        }
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            margin: 4px 0;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #27ae60;
-        }
-        button:disabled {
-            background-color: #95a5a6;
-            cursor: not-allowed;
-        }
-        .error {
-            color: #e74c3c;
-            text-align: center;
-            margin-top: 10px;
-        }
-        #speechRecognitionResult {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #ecf0f1;
-            border-radius: 4px;
-            font-style: italic;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="app" class="container">
         <h1>Minigolf Scoreboard</h1>
+        <div id="gameControls">
+            <button id="newGameButton">Neues Spiel</button>
+            <select id="loadGameSelect">
+                <option value="">Spiel laden...</option>
+            </select>
+            <button id="shareGameButton">Spiel teilen</button>
+        </div>
         <div id="playerSelection">
             <input type="text" id="newPlayerInput" placeholder="Spielername">
             <button id="addPlayerButton">Spieler hinzufügen</button>
             <button id="finishPlayerSelectionButton">Spielerauswahl abschließen</button>
-            <ul id="playerList"></ul>
-        </div>
-        <div id="gameArea" style="display: none;">
             <div id="speechRecognition">
                 <button id="speechButton">Sprachbefehl</button>
                 <div id="microphoneError" class="error"></div>
             </div>
+            <ul id="playerList"></ul>
+        </div>
+        <div id="gameArea" style="display: none;">
             <div id="scoreboardContainer"></div>
             <div id="leaderInfo"></div>
         </div>
@@ -98,240 +35,6 @@
         </div>
         <div id="speechRecognitionResult"></div>
     </div>
-
-    <script>
-        class MinigolfApp {
-            constructor() {
-                this.players = [];
-                this.scores = {};
-                this.completedHoles = 0;
-                this.isListening = false;
-                this.speechRecognition = null;
-                this.playerSelectionComplete = false;
-
-                this.initializeElements();
-                this.initializeSpeechRecognition();
-                this.addEventListeners();
-                this.loadState();
-            }
-
-            initializeElements() {
-                this.newPlayerInput = document.getElementById('newPlayerInput');
-                this.addPlayerButton = document.getElementById('addPlayerButton');
-                this.finishPlayerSelectionButton = document.getElementById('finishPlayerSelectionButton');
-                this.playerList = document.getElementById('playerList');
-                this.playerSelection = document.getElementById('playerSelection');
-                this.gameArea = document.getElementById('gameArea');
-                this.speechButton = document.getElementById('speechButton');
-                this.microphoneError = document.getElementById('microphoneError');
-                this.scoreboardContainer = document.getElementById('scoreboardContainer');
-                this.leaderInfo = document.getElementById('leaderInfo');
-                this.speechRecognitionResult = document.getElementById('speechRecognitionResult');
-            }
-
-            initializeSpeechRecognition() {
-                if ('webkitSpeechRecognition' in window) {
-                    this.speechRecognition = new webkitSpeechRecognition();
-                    this.speechRecognition.continuous = false;
-                    this.speechRecognition.lang = 'de-DE';
-                    this.speechRecognition.onresult = (event) => {
-                        const transcript = event.results[0][0].transcript;
-                        console.log("Erkannter Text:", transcript);
-                        this.speechRecognitionResult.textContent = `Erkannt: ${transcript}`;
-                        this.processVoiceCommand(transcript);
-                    };
-                    this.speechRecognition.onend = () => {
-                        console.log("Spracherkennung beendet");
-                        this.isListening = false;
-                        this.updateSpeechButton();
-                    };
-                    this.speechRecognition.onerror = (event) => {
-                        console.error("Spracherkennungsfehler:", event.error);
-                        if (event.error === 'not-allowed') {
-                            this.microphoneError.textContent = 'Mikrofonzugriff wurde verweigert. Bitte erteilen Sie die Erlaubnis in Ihren Browsereinstellungen.';
-                        }
-                        this.isListening = false;
-                        this.updateSpeechButton();
-                    };
-                    console.log("Spracherkennung initialisiert");
-                } else {
-                    console.log("Spracherkennung wird von diesem Browser nicht unterstützt");
-                    this.microphoneError.textContent = 'Ihr Browser unterstützt die Spracherkennung nicht. Bitte verwenden Sie einen modernen Browser wie Chrome.';
-                }
-            }
-
-            addEventListeners() {
-                this.addPlayerButton.addEventListener('click', () => this.addPlayer());
-                this.finishPlayerSelectionButton.addEventListener('click', () => this.finishPlayerSelection());
-                this.speechButton.addEventListener('click', () => this.startListening());
-            }
-
-            loadState() {
-                const savedState = localStorage.getItem('minigolfAppState');
-                if (savedState) {
-                    const state = JSON.parse(savedState);
-                    this.players = state.players;
-                    this.scores = state.scores;
-                    this.completedHoles = state.completedHoles;
-                    this.playerSelectionComplete = state.playerSelectionComplete;
-
-                    if (this.playerSelectionComplete) {
-                        this.playerSelection.style.display = 'none';
-                        this.gameArea.style.display = 'block';
-                        this.renderScoreboard();
-                    } else {
-                        this.renderPlayerList();
-                    }
-                }
-            }
-
-            saveState() {
-                const state = {
-                    players: this.players,
-                    scores: this.scores,
-                    completedHoles: this.completedHoles,
-                    playerSelectionComplete: this.playerSelectionComplete
-                };
-                localStorage.setItem('minigolfAppState', JSON.stringify(state));
-            }
-
-            startListening() {
-                if (this.speechRecognition && !this.isListening) {
-                    console.log("Starte Spracherkennung");
-                    this.speechRecognition.start();
-                    this.isListening = true;
-                    this.updateSpeechButton();
-                } else {
-                    console.log("Spracherkennung nicht initialisiert oder bereits aktiv");
-                }
-            }
-
-            updateSpeechButton() {
-                this.speechButton.textContent = this.isListening ? 'Hört zu...' : 'Sprachbefehl';
-                this.speechButton.style.backgroundColor = this.isListening ? '#e74c3c' : '#3498db';
-            }
-
-            processVoiceCommand(command) {
-                console.log("Verarbeite Sprachbefehl:", command);
-                const lowerCommand = command.toLowerCase();
-                if (lowerCommand.includes('spieler') && lowerCommand.includes('hinzufügen')) {
-                    const name = lowerCommand.replace('spieler hinzufügen', '').trim();
-                    if (name) {
-                        console.log("Füge Spieler hinzu:", name);
-                        this.addPlayer(name);
-                    }
-                } else if (lowerCommand.includes('bahn abschließen')) {
-                    console.log("Schließe Bahn ab");
-                    this.completeHole();
-                } else if (lowerCommand.includes('punktzahl')) {
-                    const parts = lowerCommand.split(' ');
-                    const playerIndex = parts.findIndex(part => part === 'für') + 1;
-                    const scoreIndex = parts.findIndex(part => !isNaN(part));
-                    if (playerIndex > 0 && scoreIndex > 0 && playerIndex < scoreIndex) {
-                        const player = parts.slice(playerIndex, scoreIndex).join(' ');
-                        const score = parseInt(parts[scoreIndex]);
-                        if (this.players.includes(player)) {
-                            console.log("Aktualisiere Punktzahl:", player, score);
-                            this.updateScore(player, this.completedHoles, score);
-                        }
-                    }
-                }
-            }
-
-            addPlayer(name = null) {
-                const playerName = name || this.newPlayerInput.value.trim();
-                if (playerName && !this.players.includes(playerName)) {
-                    this.players.push(playerName);
-                    this.scores[playerName] = Array(18).fill(null);
-                    this.newPlayerInput.value = '';
-                    this.renderPlayerList();
-                    this.saveState();
-                }
-            }
-
-            renderPlayerList() {
-                this.playerList.innerHTML = this.players.map(player => `<li>${player}</li>`).join('');
-            }
-
-            finishPlayerSelection() {
-                if (this.players.length > 0) {
-                    this.playerSelectionComplete = true;
-                    this.playerSelection.style.display = 'none';
-                    this.gameArea.style.display = 'block';
-                    this.renderScoreboard();
-                    this.saveState();
-                } else {
-                    alert('Bitte fügen Sie mindestens einen Spieler hinzu, bevor Sie die Auswahl abschließen.');
-                }
-            }
-
-            updateScore(player, hole, value) {
-                this.scores[player][hole] = value === '' ? null : Math.max(0, parseInt(value) || 0);
-                this.renderScoreboard();
-                this.saveState();
-            }
-
-            completeHole() {
-                if (this.completedHoles < 18 && this.players.every(player => this.scores[player][this.completedHoles] !== null)) {
-                    this.completedHoles++;
-                    this.renderScoreboard();
-                    this.saveState();
-                } else {
-                    alert('Bitte füllen Sie die Punktzahlen für alle Spieler aus, bevor Sie die Bahn abschließen.');
-                }
-            }
-
-            calculateTotal(player) {
-                return this.scores[player].slice(0, this.completedHoles).reduce((sum, score) => sum + (score || 0), 0);
-            }
-
-            getLeader() {
-                if (this.players.length === 0 || this.completedHoles === 0) return null;
-                return this.players.reduce((leader, player) =>
-                    this.calculateTotal(player) < this.calculateTotal(leader) ? player : leader
-                );
-            }
-
-            renderScoreboard() {
-                let html = '<table><thead><tr><th>Bahn</th>';
-                this.players.forEach(player => {
-                    html += `<th>${player}</th>`;
-                });
-                html += '</tr></thead><tbody>';
-
-                for (let i = 0; i <= this.completedHoles; i++) {
-                    html += `<tr><td>${i + 1}</td>`;
-                    this.players.forEach(player => {
-                        const score = this.scores[player][i];
-                        html += `<td><input type="number" value="${score === null ? '' : score}" ${i < this.completedHoles ? 'disabled' : ''} onchange="app.updateScore('${player}', ${i}, this.value)"></td>`;
-                    });
-                    html += '</tr>';
-                }
-
-                html += '<tr><td><strong>Gesamt</strong></td>';
-                this.players.forEach(player => {
-                    html += `<td><strong>${this.calculateTotal(player)}</strong></td>`;
-                });
-                html += '</tr></tbody></table>';
-
-                html += `<div style="margin-top: 20px; text-align: center;">
-                    <button onclick="app.completeHole()" ${this.completedHoles >= 18 ? 'disabled' : ''}>Bahn abschließen</button>
-                </div>`;
-
-                this.scoreboardContainer.innerHTML = html;
-
-                const leader = this.getLeader();
-                if (leader) {
-                    this.leaderInfo.innerHTML = `<div style="margin-top: 20px; text-align: center; font-size: 18px; font-weight: bold;">
-                        Führender Spieler: ${leader} (Punktzahl: ${this.calculateTotal(leader)})
-                    </div>`;
-                } else {
-                    this.leaderInfo.innerHTML = '';
-                }
-            }
-        }
-
-        const app = new MinigolfApp();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
