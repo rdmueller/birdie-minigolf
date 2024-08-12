@@ -1,0 +1,128 @@
+= Minigolf Scoreboard App
+:toc:
+:toc-title: Inhaltsverzeichnis
+:sectnums:
+
+== Einführung
+
+Die Minigolf Scoreboard App ist eine webbasierte Anwendung, die es Spielern ermöglicht, ihre Punktzahlen während eines Minigolf-Spiels zu verfolgen. Die App bietet eine benutzerfreundliche Oberfläche zum Hinzufügen von Spielern, Erfassen von Punktzahlen und Verfolgen des Spielfortschritts. Zusätzlich verfügt sie über Funktionen wie Sprachsteuerung, das Speichern und Laden von Spielen sowie die Möglichkeit, Spiele mit anderen zu teilen.
+
+== Funktionen
+
+* Hinzufügen und Verwalten von Spielern
+* Erfassen und Anzeigen von Punktzahlen für jede Bahn
+* Automatische Berechnung der Gesamtpunktzahl
+* Anzeige des führenden Spielers
+* Sprachsteuerung für einfache Bedienung
+* Speichern und Laden von Spielen
+* Teilen von Spielen mit anderen Spielern
+* Responsive Design für verschiedene Bildschirmgrößen
+
+== Dateien
+
+Die App besteht aus drei Hauptdateien:
+
+1. `index.html`: Die Hauptstruktur der App
+2. `styles.css`: Das Stylesheet für das Layout und Design
+3. `script.js`: Die JavaScript-Logik für die App-Funktionalität
+
+=== index.html
+
+Die HTML-Datei definiert die Struktur der App und enthält alle notwendigen Elemente für die Benutzeroberfläche. Sie bindet auch die CSS- und JavaScript-Dateien ein.
+
+Wichtige Abschnitte:
+
+* `<div id="app">`: Der Hauptcontainer für die App
+* `<div id="gameControls">`: Enthält Buttons für neue Spiele, Laden und Teilen
+* `<div id="playerSelection">`: Bereich für die Spielerauswahl
+* `<div id="gameArea">`: Bereich für die Punktetabelle und Spielinformationen
+* `<div id="speechRecognition">`: Container für den Sprachbefehl-Button
+
+=== styles.css
+
+Die CSS-Datei definiert das Layout und Design der App. Sie enthält Styles für alle HTML-Elemente und sorgt für ein responsives Design.
+
+Wichtige Abschnitte:
+
+* Grundlegende Styles für Body und Container
+* Styles für Buttons, Inputs und Tabellen
+* Spezifische Styles für den Sprachbefehl-Button
+* Media Queries für die Anpassung an verschiedene Bildschirmgrößen
+
+=== script.js
+
+Die JavaScript-Datei enthält die gesamte Logik für die Funktionalität der App. Sie ist als Klasse `MinigolfApp` strukturiert.
+
+Wichtige Methoden:
+
+* `constructor()`: Initialisiert die App
+* `addPlayer()`: Fügt einen neuen Spieler hinzu
+* `updateScore()`: Aktualisiert die Punktzahl eines Spielers
+* `completeHole()`: Schließt eine Bahn ab
+* `renderScoreboard()`: Aktualisiert die Anzeige der Punktetabelle
+* `startNewGame()`: Startet ein neues Spiel
+* `loadSelectedGame()`: Lädt ein gespeichertes Spiel
+* `shareGame()`: Erstellt einen teilbaren Link für das aktuelle Spiel
+* `processVoiceCommand()`: Verarbeitet Sprachbefehle
+
+== Installation
+
+1. Laden Sie die drei Dateien (`index.html`, `styles.css`, `script.js`) herunter.
+2. Speichern Sie alle drei Dateien im selben Verzeichnis.
+3. Öffnen Sie die `index.html` Datei in einem modernen Webbrowser (Chrome, Firefox, Safari, Edge).
+
+== Nutzung
+
+1. Öffnen Sie die App in Ihrem Browser.
+2. Fügen Sie Spieler hinzu, indem Sie ihre Namen eingeben und auf "Spieler hinzufügen" klicken.
+3. Klicken Sie auf "Spielerauswahl abschließen", wenn alle Spieler hinzugefügt wurden.
+4. Geben Sie die Punktzahlen für jede Bahn ein.
+5. Klicken Sie auf "Bahn abschließen", um zur nächsten Bahn zu wechseln.
+6. Nutzen Sie den "Sprachbefehl" Button für die Sprachsteuerung.
+7. Verwenden Sie die Buttons "Neues Spiel", "Spiel laden" und "Spiel teilen" nach Bedarf.
+
+=== Sprachbefehle
+
+Die App unterstützt folgende Sprachbefehle:
+
+* "Spieler [Name] hinzufügen": Fügt einen neuen Spieler hinzu
+* "Bahn abschließen": Schließt die aktuelle Bahn ab
+* "Punktzahl für [Spieler] [Zahl]": Aktualisiert die Punktzahl eines Spielers
+
+== Technische Details
+
+Die App verwendet:
+
+* HTML5 für die Struktur
+* CSS3 für das Styling
+* Vanilla JavaScript (ES6+) für die Funktionalität
+* Web Storage API für das Speichern von Spielständen
+* Web Speech API für die Spracherkennung
+
+== Browser-Kompatibilität
+
+Die App wurde für moderne Webbrowser entwickelt und getestet. Für die volle Funktionalität, insbesondere die Spracherkennung, wird ein aktueller Chrome-Browser empfohlen.
+
+== Bekannte Probleme
+
+* Die Spracherkennung funktioniert möglicherweise nicht in allen Browsern.
+* Sehr lange Spielernamen können das Layout der Punktetabelle beeinträchtigen.
+
+== Zukünftige Verbesserungen
+
+* Implementierung einer Backend-Datenbank für persistente Speicherung
+* Hinzufügen von Mehrspieler-Funktionen in Echtzeit
+* Erweiterung der Sprachbefehle für mehr Funktionen
+* Hinzufügen von Statistiken und Analysen für Spieler
+
+== Beitrag
+
+Beiträge zur Verbesserung der App sind willkommen. Bitte erstellen Sie einen Fork des Repositories und reichen Sie Pull Requests ein.
+
+== Lizenz
+
+Diese App ist unter der MIT-Lizenz veröffentlicht. Siehe die LICENSE-Datei für Details.
+
+== Kontakt
+
+Bei Fragen oder Anregungen kontaktieren Sie bitte den Entwickler unter [Ihre Kontaktinformationen].
