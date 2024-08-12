@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minigolf Scoreboard</title>
-    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -69,62 +67,162 @@
             text-align: center;
             margin-top: 10px;
         }
+        #speechRecognitionResult {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="app" class="container">
+        <h1>Minigolf Scoreboard</h1>
+        <div id="playerSelection">
+            <input type="text" id="newPlayerInput" placeholder="Spielername">
+            <button id="addPlayerButton">Spieler hinzufügen</button>
+            <button id="finishPlayerSelectionButton">Spielerauswahl abschließen</button>
+            <ul id="playerList"></ul>
+        </div>
+        <div id="gameArea" style="display: none;">
+            <div id="speechRecognition">
+                <button id="speechButton">Sprachbefehl</button>
+                <div id="microphoneError" class="error"></div>
+            </div>
+            <div id="scoreboardContainer"></div>
+            <div id="leaderInfo"></div>
+        </div>
+        <div style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
+            Sprachbefehle: "Spieler [Name] hinzufügen", "Bahn abschließen", "Punktzahl für [Spieler] [Zahl]"
+        </div>
+        <div id="speechRecognitionResult"></div>
+    </div>
 
     <script>
-        function MinigolfApp() {
-            const [players, setPlayers] = React.useState([]);
-            const [newPlayer, setNewPlayer] = React.useState('');
-            const [scores, setScores] = React.useState({});
-            const [completedHoles, setCompletedHoles] = React.useState(0);
-            const [isListening, setIsListening] = React.useState(false);
-            const [speechRecognition, setSpeechRecognition] = React.useState(null);
-            const [microphoneError, setMicrophoneError] = React.useState(null);
+        class MinigolfApp {
+            constructor() {
+                this.players = [];
+                this.scores = {};
+                this.completedHoles = 0;
+                this.isListening = false;
+                this.speechRecognition = null;
+                this.playerSelectionComplete = false;
 
-            React.useEffect(() => {
+                this.initializeElements();
+                this.initializeSpeechRecognition();
+                this.addEventListeners();
+                this.loadState();
+            }
+
+            initializeElements() {
+                this.newPlayerInput = document.getElementById('newPlayerInput');
+                this.addPlayerButton = document.getElementById('addPlayerButton');
+                this.finishPlayerSelectionButton = document.getElementById('finishPlayerSelectionButton');
+                this.playerList = document.getElementById('playerList');
+                this.playerSelection = document.getElementById('playerSelection');
+                this.gameArea = document.getElementById('gameArea');
+                this.speechButton = document.getElementById('speechButton');
+                this.microphoneError = document.getElementById('microphoneError');
+                this.scoreboardContainer = document.getElementById('scoreboardContainer');
+                this.leaderInfo = document.getElementById('leaderInfo');
+                this.speechRecognitionResult = document.getElementById('speechRecognitionResult');
+            }
+
+            initializeSpeechRecognition() {
                 if ('webkitSpeechRecognition' in window) {
-                    const recognition = new window.webkitSpeechRecognition();
-                    recognition.continuous = false;
-                    recognition.lang = 'de-DE';
-                    recognition.onresult = (event) => {
+                    this.speechRecognition = new webkitSpeechRecognition();
+                    this.speechRecognition.continuous = false;
+                    this.speechRecognition.lang = 'de-DE';
+                    this.speechRecognition.onresult = (event) => {
                         const transcript = event.results[0][0].transcript;
                         console.log("Erkannter Text:", transcript);
-                        processVoiceCommand(transcript);
+                        this.speechRecognitionResult.textContent = `Erkannt: ${transcript}`;
+                        this.processVoiceCommand(transcript);
                     };
-                    recognition.onend = () => {
+                    this.speechRecognition.onend = () => {
                         console.log("Spracherkennung beendet");
-                        setIsListening(false);
+                        this.isListening = false;
+                        this.updateSpeechButton();
                     };
-                    recognition.onerror = (event) => {
+                    this.speechRecognition.onerror = (event) => {
                         console.error("Spracherkennungsfehler:", event.error);
                         if (event.error === 'not-allowed') {
-                            setMicrophoneError('Mikrofonzugriff wurde verweigert. Bitte erteilen Sie die Erlaubnis in Ihren Browsereinstellungen.');
+                            this.microphoneError.textContent = 'Mikrofonzugriff wurde verweigert. Bitte erteilen Sie die Erlaubnis in Ihren Browsereinstellungen.';
                         }
-                        setIsListening(false);
+                        this.isListening = false;
+                        this.updateSpeechButton();
                     };
-                    setSpeechRecognition(recognition);
                     console.log("Spracherkennung initialisiert");
                 } else {
                     console.log("Spracherkennung wird von diesem Browser nicht unterstützt");
-                    setMicrophoneError('Ihr Browser unterstützt die Spracherkennung nicht. Bitte verwenden Sie einen modernen Browser wie Chrome.');
+                    this.microphoneError.textContent = 'Ihr Browser unterstützt die Spracherkennung nicht. Bitte verwenden Sie einen modernen Browser wie Chrome.';
                 }
-            }, []);
+            }
 
-            function processVoiceCommand(command) {
+            addEventListeners() {
+                this.addPlayerButton.addEventListener('click', () => this.addPlayer());
+                this.finishPlayerSelectionButton.addEventListener('click', () => this.finishPlayerSelection());
+                this.speechButton.addEventListener('click', () => this.startListening());
+            }
+
+            loadState() {
+                const savedState = localStorage.getItem('minigolfAppState');
+                if (savedState) {
+                    const state = JSON.parse(savedState);
+                    this.players = state.players;
+                    this.scores = state.scores;
+                    this.completedHoles = state.completedHoles;
+                    this.playerSelectionComplete = state.playerSelectionComplete;
+
+                    if (this.playerSelectionComplete) {
+                        this.playerSelection.style.display = 'none';
+                        this.gameArea.style.display = 'block';
+                        this.renderScoreboard();
+                    } else {
+                        this.renderPlayerList();
+                    }
+                }
+            }
+
+            saveState() {
+                const state = {
+                    players: this.players,
+                    scores: this.scores,
+                    completedHoles: this.completedHoles,
+                    playerSelectionComplete: this.playerSelectionComplete
+                };
+                localStorage.setItem('minigolfAppState', JSON.stringify(state));
+            }
+
+            startListening() {
+                if (this.speechRecognition && !this.isListening) {
+                    console.log("Starte Spracherkennung");
+                    this.speechRecognition.start();
+                    this.isListening = true;
+                    this.updateSpeechButton();
+                } else {
+                    console.log("Spracherkennung nicht initialisiert oder bereits aktiv");
+                }
+            }
+
+            updateSpeechButton() {
+                this.speechButton.textContent = this.isListening ? 'Hört zu...' : 'Sprachbefehl';
+                this.speechButton.style.backgroundColor = this.isListening ? '#e74c3c' : '#3498db';
+            }
+
+            processVoiceCommand(command) {
                 console.log("Verarbeite Sprachbefehl:", command);
                 const lowerCommand = command.toLowerCase();
                 if (lowerCommand.includes('spieler') && lowerCommand.includes('hinzufügen')) {
                     const name = lowerCommand.replace('spieler hinzufügen', '').trim();
                     if (name) {
                         console.log("Füge Spieler hinzu:", name);
-                        addPlayer(name);
+                        this.addPlayer(name);
                     }
                 } else if (lowerCommand.includes('bahn abschließen')) {
                     console.log("Schließe Bahn ab");
-                    completeHole();
+                    this.completeHole();
                 } else if (lowerCommand.includes('punktzahl')) {
                     const parts = lowerCommand.split(' ');
                     const playerIndex = parts.findIndex(part => part === 'für') + 1;
@@ -132,188 +230,108 @@
                     if (playerIndex > 0 && scoreIndex > 0 && playerIndex < scoreIndex) {
                         const player = parts.slice(playerIndex, scoreIndex).join(' ');
                         const score = parseInt(parts[scoreIndex]);
-                        if (players.includes(player)) {
+                        if (this.players.includes(player)) {
                             console.log("Aktualisiere Punktzahl:", player, score);
-                            updateScore(player, completedHoles, score);
+                            this.updateScore(player, this.completedHoles, score);
                         }
                     }
                 }
             }
 
-            function startListening() {
-                if (speechRecognition) {
-                    console.log("Starte Spracherkennung");
-                    speechRecognition.start();
-                    setIsListening(true);
+            addPlayer(name = null) {
+                const playerName = name || this.newPlayerInput.value.trim();
+                if (playerName && !this.players.includes(playerName)) {
+                    this.players.push(playerName);
+                    this.scores[playerName] = Array(18).fill(null);
+                    this.newPlayerInput.value = '';
+                    this.renderPlayerList();
+                    this.saveState();
+                }
+            }
+
+            renderPlayerList() {
+                this.playerList.innerHTML = this.players.map(player => `<li>${player}</li>`).join('');
+            }
+
+            finishPlayerSelection() {
+                if (this.players.length > 0) {
+                    this.playerSelectionComplete = true;
+                    this.playerSelection.style.display = 'none';
+                    this.gameArea.style.display = 'block';
+                    this.renderScoreboard();
+                    this.saveState();
                 } else {
-                    console.log("Spracherkennung nicht initialisiert");
+                    alert('Bitte fügen Sie mindestens einen Spieler hinzu, bevor Sie die Auswahl abschließen.');
                 }
             }
 
-            function addPlayer(name) {
-                if (name && !players.includes(name)) {
-                    setPlayers([...players, name]);
-                    setScores(prevScores => ({
-                        ...prevScores,
-                        [name]: Array(18).fill(null)
-                    }));
-                    setNewPlayer('');
-                }
+            updateScore(player, hole, value) {
+                this.scores[player][hole] = value === '' ? null : Math.max(0, parseInt(value) || 0);
+                this.renderScoreboard();
+                this.saveState();
             }
 
-            function updateScore(player, hole, value) {
-                setScores(prevScores => ({
-                    ...prevScores,
-                    [player]: prevScores[player].map((score, index) =>
-                        index === hole ? (value === '' ? null : Math.max(0, parseInt(value) || 0)) : score
-                    )
-                }));
-            }
-
-            function completeHole() {
-                if (completedHoles < 18 && players.every(player => scores[player][completedHoles] !== null)) {
-                    setCompletedHoles(prevHoles => prevHoles + 1);
+            completeHole() {
+                if (this.completedHoles < 18 && this.players.every(player => this.scores[player][this.completedHoles] !== null)) {
+                    this.completedHoles++;
+                    this.renderScoreboard();
+                    this.saveState();
                 } else {
                     alert('Bitte füllen Sie die Punktzahlen für alle Spieler aus, bevor Sie die Bahn abschließen.');
                 }
             }
 
-            function calculateTotal(player) {
-                return scores[player]?.slice(0, completedHoles).reduce((sum, score) => sum + (score || 0), 0) || 0;
+            calculateTotal(player) {
+                return this.scores[player].slice(0, this.completedHoles).reduce((sum, score) => sum + (score || 0), 0);
             }
 
-            function getLeader() {
-                if (players.length === 0 || completedHoles === 0) return null;
-                return players.reduce((leader, player) =>
-                    calculateTotal(player) < calculateTotal(leader) ? player : leader
+            getLeader() {
+                if (this.players.length === 0 || this.completedHoles === 0) return null;
+                return this.players.reduce((leader, player) =>
+                    this.calculateTotal(player) < this.calculateTotal(leader) ? player : leader
                 );
             }
 
-            return React.createElement(
-                'div',
-                { className: 'container' },
-                React.createElement('h1', null, 'Minigolf Scoreboard'),
-                React.createElement(
-                    'div',
-                    { style: { marginBottom: '20px', textAlign: 'center' } },
-                    React.createElement(
-                        'button',
-                        {
-                            onClick: startListening,
-                            disabled: isListening,
-                            style: {
-                                backgroundColor: isListening ? '#e74c3c' : '#3498db',
-                                padding: '10px 20px',
-                                fontSize: '16px',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer'
-                            }
-                        },
-                        isListening ? 'Hört zu...' : 'Sprachbefehl'
-                    ),
-                    microphoneError && React.createElement('div', { className: 'error' }, microphoneError)
-                ),
-                React.createElement(
-                    'div',
-                    { style: { marginBottom: '20px', display: 'flex', justifyContent: 'space-between' } },
-                    React.createElement('input', {
-                        type: 'text',
-                        value: newPlayer,
-                        onChange: (e) => setNewPlayer(e.target.value),
-                        placeholder: 'Spielername',
-                        style: { flexGrow: 1, marginRight: '10px' }
-                    }),
-                    React.createElement(
-                        'button',
-                        { onClick: () => addPlayer(newPlayer) },
-                        'Spieler hinzufügen'
-                    )
-                ),
-                players.length > 0 && React.createElement(
-                    React.Fragment,
-                    null,
-                    React.createElement(
-                        'table',
-                        null,
-                        React.createElement(
-                            'thead',
-                            null,
-                            React.createElement(
-                                'tr',
-                                null,
-                                React.createElement('th', null, 'Bahn'),
-                                players.map(player => React.createElement('th', { key: player }, player))
-                            )
-                        ),
-                        React.createElement(
-                            'tbody',
-                            null,
-                            Array.from({ length: completedHoles + 1 }, (_, i) =>
-                                React.createElement(
-                                    'tr',
-                                    { key: i },
-                                    React.createElement('td', null, i + 1),
-                                    players.map(player =>
-                                        React.createElement(
-                                            'td',
-                                            { key: player },
-                                            React.createElement('input', {
-                                                type: 'number',
-                                                value: scores[player][i] === null ? '' : scores[player][i],
-                                                onChange: (e) => updateScore(player, i, e.target.value),
-                                                disabled: i < completedHoles
-                                            })
-                                        )
-                                    )
-                                )
-                            ),
-                            React.createElement(
-                                'tr',
-                                null,
-                                React.createElement('td', null, React.createElement('strong', null, 'Gesamt')),
-                                players.map(player =>
-                                    React.createElement(
-                                        'td',
-                                        { key: player },
-                                        React.createElement('strong', null, calculateTotal(player))
-                                    )
-                                )
-                            )
-                        )
-                    ),
-                    React.createElement(
-                        'div',
-                        { style: { marginTop: '20px', textAlign: 'center' } },
-                        React.createElement(
-                            'button',
-                            { onClick: completeHole, disabled: completedHoles >= 18 },
-                            'Bahn abschließen'
-                        )
-                    ),
-                    getLeader() && React.createElement(
-                        'div',
-                        { style: { marginTop: '20px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold' } },
-                        'Führender Spieler: ',
-                        getLeader(),
-                        ' (Punktzahl: ',
-                        calculateTotal(getLeader()),
-                        ')'
-                    )
-                ),
-                React.createElement(
-                    'div',
-                    { style: { marginTop: '20px', textAlign: 'center', fontSize: '14px', color: '#666' } },
-                    'Sprachbefehle: "Spieler [Name] hinzufügen", "Bahn abschließen", "Punktzahl für [Spieler] [Zahl]"'
-                )
-            );
+            renderScoreboard() {
+                let html = '<table><thead><tr><th>Bahn</th>';
+                this.players.forEach(player => {
+                    html += `<th>${player}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                for (let i = 0; i <= this.completedHoles; i++) {
+                    html += `<tr><td>${i + 1}</td>`;
+                    this.players.forEach(player => {
+                        const score = this.scores[player][i];
+                        html += `<td><input type="number" value="${score === null ? '' : score}" ${i < this.completedHoles ? 'disabled' : ''} onchange="app.updateScore('${player}', ${i}, this.value)"></td>`;
+                    });
+                    html += '</tr>';
+                }
+
+                html += '<tr><td><strong>Gesamt</strong></td>';
+                this.players.forEach(player => {
+                    html += `<td><strong>${this.calculateTotal(player)}</strong></td>`;
+                });
+                html += '</tr></tbody></table>';
+
+                html += `<div style="margin-top: 20px; text-align: center;">
+                    <button onclick="app.completeHole()" ${this.completedHoles >= 18 ? 'disabled' : ''}>Bahn abschließen</button>
+                </div>`;
+
+                this.scoreboardContainer.innerHTML = html;
+
+                const leader = this.getLeader();
+                if (leader) {
+                    this.leaderInfo.innerHTML = `<div style="margin-top: 20px; text-align: center; font-size: 18px; font-weight: bold;">
+                        Führender Spieler: ${leader} (Punktzahl: ${this.calculateTotal(leader)})
+                    </div>`;
+                } else {
+                    this.leaderInfo.innerHTML = '';
+                }
+            }
         }
 
-        ReactDOM.render(
-            React.createElement(MinigolfApp),
-            document.getElementById('root')
-        );
+        const app = new MinigolfApp();
     </script>
 </body>
 </html>
