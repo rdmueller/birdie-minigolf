@@ -30,7 +30,7 @@ class MinigolfApp {
         this.newGameButton = document.getElementById('newGameButton');
         this.loadGameSelect = document.getElementById('loadGameSelect');
         this.shareGameButton = document.getElementById('shareGameButton');
-        const utterance = new SpeechSynthesisUtterance('Willkommen bei Birdie!');
+        const utterance = new SpeechSynthesisUtterance('Willkommen bei Bördie! Lass uns Minigolf spielen.');
         window.speechSynthesis.speak(utterance);
 }
 
