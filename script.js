@@ -78,7 +78,7 @@ class MinigolfApp {
                 if (transcript.includes('computer')) {
                     this.startListening();
                     this.wakeWordStatus.textContent = 'OK';
-                    const utterance = new SpeechSynthesisUtterance('OK');
+                    const utterance = new SpeechSynthesisUtterance('OK!');
                     window.speechSynthesis.speak(utterance);
                 } else {
                     console.log(event);
