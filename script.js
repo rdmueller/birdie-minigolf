@@ -22,7 +22,6 @@ class MinigolfApp {
         this.playerList = document.getElementById('playerList');
         this.playerSelection = document.getElementById('playerSelection');
         this.gameArea = document.getElementById('gameArea');
-        this.speechButton = document.getElementById('speechButton');
         this.microphoneError = document.getElementById('microphoneError');
         this.scoreboardContainer = document.getElementById('scoreboardContainer');
         this.leaderInfo = document.getElementById('leaderInfo');
@@ -30,9 +29,10 @@ class MinigolfApp {
         this.newGameButton = document.getElementById('newGameButton');
         this.loadGameSelect = document.getElementById('loadGameSelect');
         this.shareGameButton = document.getElementById('shareGameButton');
+        this.wakeWordStatus = document.getElementById('wakeWordStatus');
         const utterance = new SpeechSynthesisUtterance('Willkommen bei Bördie! Lass uns Minigolf spielen.');
         window.speechSynthesis.speak(utterance);
-}
+    }
 
     initializeSpeechRecognition() {
         if ('webkitSpeechRecognition' in window) {
@@ -48,7 +48,6 @@ class MinigolfApp {
             this.speechRecognition.onend = () => {
                 console.log("Spracherkennung beendet");
                 this.isListening = false;
-                this.updateSpeechButton();
             };
             this.speechRecognition.onerror = (event) => {
                 console.error("Spracherkennungsfehler:", event.error);
@@ -56,19 +55,46 @@ class MinigolfApp {
                     this.microphoneError.textContent = 'Mikrofonzugriff wurde verweigert. Bitte erteilen Sie die Erlaubnis in Ihren Browsereinstellungen.';
                 }
                 this.isListening = false;
-                this.updateSpeechButton();
             };
             console.log("Spracherkennung initialisiert");
+            this.initializeWakeWordDetection();
         } else {
             console.log("Spracherkennung wird von diesem Browser nicht unterstützt");
             this.microphoneError.textContent = 'Ihr Browser unterstützt die Spracherkennung nicht. Bitte verwenden Sie einen modernen Browser wie Chrome.';
         }
     }
 
+    initializeWakeWordDetection() {
+        if ('webkitSpeechRecognition' in window) {
+            const wakeWordRecognition = new webkitSpeechRecognition();
+            wakeWordRecognition.continuous = true;
+            wakeWordRecognition.lang = 'de-DE';
+            wakeWordRecognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript.toLowerCase();
+                if (transcript.includes('hey birdie')) {
+                    console.log("Wake-word erkannt:", transcript);
+                    this.wakeWordStatus.textContent = 'Wake-word erkannt: Hey, Birdie';
+                    this.startListening();
+                }
+            };
+            wakeWordRecognition.onend = () => {
+                console.log("Wake-word Erkennung beendet, starte neu");
+                wakeWordRecognition.start();
+            };
+            wakeWordRecognition.onerror = (event) => {
+                console.error("Wake-word Erkennungsfehler:", event.error);
+            };
+            wakeWordRecognition.start();
+            console.log("Wake-word Erkennung initialisiert");
+        } else {
+            console.log("Wake-word Erkennung wird von diesem Browser nicht unterstützt");
+            this.wakeWordStatus.textContent = 'Ihr Browser unterstützt die Wake-word Erkennung nicht. Bitte verwenden Sie einen modernen Browser wie Chrome.';
+        }
+    }
+
     addEventListeners() {
         this.addPlayerButton.addEventListener('click', () => this.addPlayer());
         this.finishPlayerSelectionButton.addEventListener('click', () => this.finishPlayerSelection());
-        this.speechButton.addEventListener('click', () => this.startListening());
         this.newGameButton.addEventListener('click', () => this.startNewGame());
         this.loadGameSelect.addEventListener('change', () => this.loadSelectedGame());
         this.shareGameButton.addEventListener('click', () => this.shareGame());
@@ -111,15 +137,9 @@ class MinigolfApp {
             console.log("Starte Spracherkennung");
             this.speechRecognition.start();
             this.isListening = true;
-            this.updateSpeechButton();
         } else {
             console.log("Spracherkennung nicht initialisiert oder bereits aktiv");
         }
-    }
-
-    updateSpeechButton() {
-        this.speechButton.textContent = this.isListening ? 'Hört zu...' : 'Sprachbefehl';
-        this.speechButton.style.backgroundColor = this.isListening ? '#e74c3c' : '#3498db';
     }
 
     processVoiceCommand(command) {
