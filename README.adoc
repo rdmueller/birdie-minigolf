@@ -17,6 +17,7 @@ Die Minigolf Scoreboard App ist eine webbasierte Anwendung, die es Spielern erm�
 * Speichern und Laden von Spielen
 * Teilen von Spielen mit anderen Spielern
 * Responsive Design für verschiedene Bildschirmgrößen
+* System reagiert mit "OK" als gesprochenes Wort und sichtbar auf dem Bildschirm, wenn das Schlüsselwort erkannt wird
 
 == Dateien
 
@@ -88,6 +89,7 @@ Die App unterstützt folgende Sprachbefehle:
 * "Spieler [Name] hinzufügen": Fügt einen neuen Spieler hinzu
 * "Bahn abschließen": Schließt die aktuelle Bahn ab
 * "Punktzahl für [Spieler] [Zahl]": Aktualisiert die Punktzahl eines Spielers
+* "OK": System reagiert mit "OK" als gesprochenes Wort und sichtbar auf dem Bildschirm, wenn das Schlüsselwort erkannt wird
 
 == Technische Details
 
