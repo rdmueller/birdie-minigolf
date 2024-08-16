@@ -8,6 +8,7 @@ class MinigolfApp {
         this.playerSelectionComplete = false;
         this.games = this.loadGames();
         this.currentGameId = null;
+        this.isSpeaking = false; // P1636
 
         this.initializeElements();
         this.initializeSpeechRecognition();
@@ -81,13 +82,17 @@ class MinigolfApp {
             };
             wakeWordRecognition.onend = () => {
                 console.log("Wake-word Erkennung beendet, starte neu");
-                wakeWordRecognition.start();
+                if (!this.isSpeaking) { // Pad7f
+                    wakeWordRecognition.start();
+                }
             };
             wakeWordRecognition.onerror = (event) => {
                 console.error("Wake-word Erkennungsfehler:", event);
                 console.error(event);
             };
-            wakeWordRecognition.start();
+            if (!this.isSpeaking) { // Pad7f
+                wakeWordRecognition.start();
+            }
             console.log("Wake-word Erkennung initialisiert");
         } else {
             console.log("Wake-word Erkennung wird von diesem Browser nicht unterstützt");
@@ -153,14 +158,26 @@ class MinigolfApp {
             if (name) {
                 console.log("Füge Spieler hinzu:", name);
                 this.addPlayer(name);
+                this.isSpeaking = true; // Pa394
                 const utterance = new SpeechSynthesisUtterance('Spieler '+name+' hinzugefügt');
+                utterance.onend = () => { // Pa394
+                    this.isSpeaking = false; // Pa394
+                    this.resumeWakeWordDetection(); // Pe39d
+                };
                 window.speechSynthesis.speak(utterance);
+                this.pauseWakeWordDetection(); // P2f77
             }
         } else if (lowerCommand.includes('bahn abschließen')) {
             console.log("Schließe Bahn ab");
             this.completeHole();
+            this.isSpeaking = true; // Pa394
             const utterance = new SpeechSynthesisUtterance('Bahn abgeschlossen');
+            utterance.onend = () => { // Pa394
+                this.isSpeaking = false; // Pa394
+                this.resumeWakeWordDetection(); // Pe39d
+            };
             window.speechSynthesis.speak(utterance);
+            this.pauseWakeWordDetection(); // P2f77
     } else if (lowerCommand.includes('punktzahl')) {
             const parts = lowerCommand.split(' ');
             const playerIndex = parts.findIndex(part => part === 'für') + 1;
@@ -171,8 +188,14 @@ class MinigolfApp {
                 if (this.players.includes(player.toLowerCase())) {
                     console.log("Aktualisiere Punktzahl:", player, score);
                     this.updateScore(player.toLowerCase(), this.completedHoles, score);
+                    this.isSpeaking = true; // Pa394
                     const utterance = new SpeechSynthesisUtterance('Spieler '+player+' hat '+score+' Schläge benötigt');
+                    utterance.onend = () => { // Pa394
+                        this.isSpeaking = false; // Pa394
+                        this.resumeWakeWordDetection(); // Pe39d
+                    };
                     window.speechSynthesis.speak(utterance);
+                    this.pauseWakeWordDetection(); // P2f77
                 }
             }
         }
@@ -344,6 +367,18 @@ class MinigolfApp {
         document.body.removeChild(tempInput);
         
         alert('Spiel-Link wurde in die Zwischenablage kopiert. Sie können ihn nun teilen.');
+    }
+
+    pauseWakeWordDetection() { // P2f77
+        if (this.wakeWordRecognition) {
+            this.wakeWordRecognition.stop();
+        }
+    }
+
+    resumeWakeWordDetection() { // Pe39d
+        if (this.wakeWordRecognition && !this.isSpeaking) {
+            this.wakeWordRecognition.start();
+        }
     }
 }
 
