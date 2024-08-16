@@ -38,10 +38,11 @@ class MinigolfApp {
     initializeSpeechRecognition() {
         if ('webkitSpeechRecognition' in window) {
             this.speechRecognition = new webkitSpeechRecognition();
-            this.speechRecognition.continuous = false;
+            this.speechRecognition.continuous = true;
             this.speechRecognition.lang = 'de-DE';
             this.speechRecognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
+                const results = event.results;
+                const transcript = results[results.length - 1][0].transcript.toLowerCase();
                 console.log("Erkannter Text:", transcript);
                 this.speechRecognitionResult.textContent = `Erkannt: ${transcript}`;
                 this.processVoiceCommand(transcript);
@@ -49,6 +50,9 @@ class MinigolfApp {
             this.speechRecognition.onend = () => {
                 console.log("Spracherkennung beendet");
                 this.isListening = false;
+                if (!this.isSpeaking) {
+                    this.speechRecognition.start();
+                }
             };
             this.speechRecognition.onerror = (event) => {
                 console.error("Spracherkennungsfehler:", event.error);
@@ -58,50 +62,10 @@ class MinigolfApp {
                 this.isListening = false;
             };
             console.log("Spracherkennung initialisiert");
-            this.initializeWakeWordDetection();
+            this.speechRecognition.start();
         } else {
             console.log("Spracherkennung wird von diesem Browser nicht unterstützt");
             this.microphoneError.textContent = 'Ihr Browser unterstützt die Spracherkennung nicht. Bitte verwenden Sie einen modernen Browser wie Chrome.';
-        }
-    }
-
-    initializeWakeWordDetection() {
-        if ('webkitSpeechRecognition' in window) {
-            const wakeWordRecognition = new webkitSpeechRecognition();
-            wakeWordRecognition.continuous = true;
-            wakeWordRecognition.lang = 'de-DE';
-            wakeWordRecognition.onresult = (event) => {
-                const results = event.results;
-                const transcript = results[results.length - 1][0].transcript.toLowerCase();
-                console.log("Wake-word erkannt:", transcript);
-                this.wakeWordStatus.textContent = `Wake-word erkannt: ${transcript}`;
-                if (transcript.includes('computer')) {
-                    this.startListening();
-                    this.wakeWordStatus.textContent = 'OK';
-                    const utterance = new SpeechSynthesisUtterance('OK!');
-                    window.speechSynthesis.speak(utterance);
-                } else {
-                    console.log(event);
-                }
-                this.clearArray(results);
-            };
-            wakeWordRecognition.onend = () => {
-                console.log("Wake-word Erkennung beendet, starte neu");
-                if (!this.isSpeaking) { // Pad7f
-                    wakeWordRecognition.start();
-                }
-            };
-            wakeWordRecognition.onerror = (event) => {
-                console.error("Wake-word Erkennungsfehler:", event);
-                console.error(event);
-            };
-            if (!this.isSpeaking) { // Pad7f
-                wakeWordRecognition.start();
-            }
-            console.log("Wake-word Erkennung initialisiert");
-        } else {
-            console.log("Wake-word Erkennung wird von diesem Browser nicht unterstützt");
-            this.wakeWordStatus.textContent = 'Ihr Browser unterstützt die Wake-word Erkennung nicht. Bitte verwenden Sie einen modernen Browser wie Chrome.';
         }
     }
 
@@ -158,7 +122,11 @@ class MinigolfApp {
     processVoiceCommand(command) {
         console.log("Verarbeite Sprachbefehl:", command);
         const lowerCommand = command.toLowerCase();
-        if (lowerCommand.includes('spieler') && lowerCommand.includes('hinzufügen')) {
+        if (lowerCommand.includes('computer')) {
+            this.wakeWordStatus.textContent = 'OK';
+            const utterance = new SpeechSynthesisUtterance('OK!');
+            window.speechSynthesis.speak(utterance);
+        } else if (lowerCommand.includes('spieler') && lowerCommand.includes('hinzufügen')) {
             const name = lowerCommand.replace(/.*spieler* ([a-zA-Z0-9]+) hinzufügen.*/, "$1").trim();
             if (name) {
                 console.log("Füge Spieler hinzu:", name);
@@ -375,14 +343,14 @@ class MinigolfApp {
     }
 
     pauseWakeWordDetection() { // P2f77
-        if (this.wakeWordRecognition) {
-            this.wakeWordRecognition.stop();
+        if (this.speechRecognition) {
+            this.speechRecognition.stop();
         }
     }
 
     resumeWakeWordDetection() { // Pe39d
-        if (this.wakeWordRecognition && !this.isSpeaking) {
-            this.wakeWordRecognition.start();
+        if (this.speechRecognition && !this.isSpeaking) {
+            this.speechRecognition.start();
         }
     }
 
