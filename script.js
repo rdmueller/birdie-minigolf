@@ -71,9 +71,9 @@ class MinigolfApp {
             wakeWordRecognition.lang = 'de-DE';
             wakeWordRecognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript.toLowerCase();
-                if (transcript.includes('hey birdie')) {
-                    console.log("Wake-word erkannt:", transcript);
-                    this.wakeWordStatus.textContent = 'Wake-word erkannt: Hey, Birdie';
+                console.log("Wake-word erkannt:", transcript);
+                this.wakeWordStatus.textContent = `Wake-word erkannt: ${transcript}`;
+                if (transcript.includes('computer')) {
                     this.startListening();
                 }
             };
