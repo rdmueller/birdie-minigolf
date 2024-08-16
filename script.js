@@ -77,6 +77,9 @@ class MinigolfApp {
                 this.wakeWordStatus.textContent = `Wake-word erkannt: ${transcript}`;
                 if (transcript.includes('computer')) {
                     this.startListening();
+                    this.wakeWordStatus.textContent = 'OK';
+                    const utterance = new SpeechSynthesisUtterance('OK');
+                    window.speechSynthesis.speak(utterance);
                 } else {
                     console.log(event);
                 }
