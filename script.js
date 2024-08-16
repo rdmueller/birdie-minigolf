@@ -75,6 +75,8 @@ class MinigolfApp {
                 this.wakeWordStatus.textContent = `Wake-word erkannt: ${transcript}`;
                 if (transcript.includes('computer')) {
                     this.startListening();
+                } else {
+                    console.log(event);
                 }
             };
             wakeWordRecognition.onend = () => {
@@ -82,7 +84,8 @@ class MinigolfApp {
                 wakeWordRecognition.start();
             };
             wakeWordRecognition.onerror = (event) => {
-                console.error("Wake-word Erkennungsfehler:", event.error);
+                console.error("Wake-word Erkennungsfehler:", event);
+                console.error(event);
             };
             wakeWordRecognition.start();
             console.log("Wake-word Erkennung initialisiert");
