@@ -71,7 +71,8 @@ class MinigolfApp {
             wakeWordRecognition.continuous = true;
             wakeWordRecognition.lang = 'de-DE';
             wakeWordRecognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript.toLowerCase();
+                const results = event.results;
+                const transcript = results[results.length - 1][0].transcript.toLowerCase();
                 console.log("Wake-word erkannt:", transcript);
                 this.wakeWordStatus.textContent = `Wake-word erkannt: ${transcript}`;
                 if (transcript.includes('computer')) {
@@ -79,6 +80,7 @@ class MinigolfApp {
                 } else {
                     console.log(event);
                 }
+                this.clearArray(results);
             };
             wakeWordRecognition.onend = () => {
                 console.log("Wake-word Erkennung beendet, starte neu");
@@ -379,6 +381,10 @@ class MinigolfApp {
         if (this.wakeWordRecognition && !this.isSpeaking) {
             this.wakeWordRecognition.start();
         }
+    }
+
+    clearArray(array) {
+        array.length = 0;
     }
 }
 
